@@ -1,0 +1,24 @@
+server:
+  port: ${PORT:8080}
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/hrms_db?createDatabaseIfNotExist=true}
+    username: root
+    password: admin
+  jpa:
+    hibernate:
+      ddl-auto: ${DB_DDL_AUTO:update}
+    open-in-view: false
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+app:
+  jwt-secret: ${JWT_SECRET:}
+  jwt-duration-hours: ${JWT_DURATION_HOURS:8}
+  cors-origins: ${CORS_ORIGINS:http://localhost:4200}
+  upload-dir: ${UPLOAD_DIR:./data/uploads}
+  demo:
+    seed: ${DEMO_SEED:false}
+    admin-email: ${DEMO_ADMIN_EMAIL:admin@hrms.dev}
+    admin-password: ${DEMO_ADMIN_PASSWORD:}

@@ -1,0 +1,48 @@
+
+# Node / Angular
+**/node_modules/
+**/dist/
+**/.angular/
+**/coverage/
+**/.cache/
+**/.npm/
+
+# Maven / Java
+**/target/
+*.class
+*.log
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+**/application-local.yml
+**/application-prod.yml
+**/application-local.properties
+**/application-prod.properties
+**/secrets/
+*.pem
+*.key
+*.p12
+*.jks
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local database and uploads
+**/data/
+**/uploads/
+**/backups/
+*.sql.gz
+*.db
+*.sqlite
+
+# Temporary account recovery
+**/LocalAdminRecoveryConfig.java

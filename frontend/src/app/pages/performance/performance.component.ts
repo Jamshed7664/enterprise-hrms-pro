@@ -1,0 +1,22 @@
+import { ToastService } from '../../core/toast.service';
+import { IconComponent } from '../../ui/icon.component';
+import { CommonModule } from '@angular/common';import { Component, OnInit } from '@angular/core';import { FormsModule } from '@angular/forms';import { forkJoin } from 'rxjs';import { ApiService } from '../../core/api.service';
+@Component({standalone:true,imports:[CommonModule,FormsModule, IconComponent],template:`
+<div class="page-head"><div><span class="section-label">Talent Development</span><h1>Performance Management</h1><p>Persisted review cycles, ratings, goals and manager feedback.</p></div><button class="btn primary" (click)="show=!show"><app-icon name="plus" /> New Review</button></div>
+<p class="error" *ngIf="error">{{error}}</p><p class="notice" *ngIf="message">{{message}}</p>
+<section class="card" *ngIf="show"><h2>New Performance Review</h2><div class="form-grid"><label>Employee<select [(ngModel)]="form.employeeId"><option [ngValue]="null">Select employee</option><option *ngFor="let e of employees" [ngValue]="e.id">{{e.firstName}} {{e.lastName}}</option></select></label>
+<label>Review cycle<input [(ngModel)]="form.cycle" placeholder="H2 2026" /></label><label>Rating (0–5)<input type="number" min="0" max="5" step="0.1" [(ngModel)]="form.rating" /></label><label>Goal progress %<input type="number" min="0" max="100" [(ngModel)]="form.progress" /></label>
+<label>Goal<input [(ngModel)]="form.goal" /></label><label>Due date<input type="date" [(ngModel)]="form.dueDate" /></label><label class="full">Feedback<textarea [(ngModel)]="form.feedback"></textarea></label></div><button class="btn primary" (click)="create()">Save Review</button></section>
+<div class="kpi-grid"><article class="kpi"><div class="kpi-copy"><span>Average Rating</span><strong>{{average|number:'1.1-1'}}</strong></div></article><article class="kpi"><div class="kpi-copy"><span>Top performers (≥4.5)</span><strong>{{topCount}}</strong></div></article><article class="kpi"><div class="kpi-copy"><span>Goals on track</span><strong>{{onTrack}}</strong></div></article><article class="kpi"><div class="kpi-copy"><span>Reviews</span><strong>{{reviews.length}}</strong></div></article></div>
+<div class="grid-2"><section class="card" *ngFor="let r of reviews"><div class="card-head"><div><h2>{{r.employee?.firstName}} {{r.employee?.lastName}}</h2><p class="muted">{{r.cycle}} · Manager: {{r.employee?.managerName}}</p></div><strong>★ {{r.rating}}</strong></div><p class="muted">{{r.feedback}}</p><div class="progress-row"><div class="progress-meta"><strong>{{r.goal}}</strong><span>{{r.progress}}%</span></div><div class="progress"><i [style.width.%]="r.progress"></i></div><small>Due {{r.dueDate||'—'}}</small></div><div class="modal-actions"><button class="btn small" (click)="update(r)">Update progress</button><button class="btn small" (click)="remove(r)">Delete</button></div></section></div>`})
+export class PerformanceComponent implements OnInit {
+ reviews:any[]=[];employees:any[]=[];show=false;error='';message='';form:any={employeeId:null,cycle:'H2 2026',rating:4,progress:0,goal:'',feedback:'',dueDate:''};
+ constructor(private api:ApiService, private toast: ToastService){}ngOnInit(){this.load();this.api.get<any[]>('/employees').subscribe({next:r=>this.employees=r,error:e=>this.error=ApiService.errorMessage(e)});}
+ load(){this.api.get<any[]>('/performance').subscribe({next:r=>this.reviews=r,error:e=>this.error=ApiService.errorMessage(e)});}
+ get average(){return this.reviews.length?this.reviews.reduce((s,r)=>s+Number(r.rating),0)/this.reviews.length:0;}
+ get topCount(){return this.reviews.filter(r=>r.rating>=4.5).length;}
+ get onTrack(){return this.reviews.filter(r=>r.progress<100).length;}
+ create(){this.api.post('/performance',this.form).subscribe({next:()=>{this.show=false;this.message='Review created';this.load()},error:e=>this.error=ApiService.errorMessage(e)});}
+ update(r:any){const raw=prompt('Enter goal progress 0-100',String(r.progress));if(raw===null)return;const value=Number(raw);if(!Number.isInteger(value)||value<0||value>100){this.error='Enter a valid percentage';this.toast.warning(this.error);return;}this.api.patch(`/performance/${r.id}/progress?value=${value}`).subscribe({next:()=>this.load(),error:e=>this.error=ApiService.errorMessage(e)});}
+ remove(r:any){if(!confirm('Delete this review?'))return;this.api.delete(`/performance/${r.id}`).subscribe({next:()=>this.load(),error:e=>this.error=ApiService.errorMessage(e)});}
+}

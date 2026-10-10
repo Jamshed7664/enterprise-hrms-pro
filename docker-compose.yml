@@ -1,0 +1,41 @@
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set in .env}
+      MYSQL_DATABASE: hrms_db
+      MYSQL_USER: hrms_app
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Set in .env}
+    ports:
+      - "127.0.0.1:3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/hrms_db
+      DB_USERNAME: hrms_app
+      DB_PASSWORD: ${DB_PASSWORD:?Set in .env}
+      JWT_SECRET: ${JWT_SECRET:?Set in .env}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:4200}
+      DEMO_SEED: "true"
+      DEMO_ADMIN_EMAIL: ${DEMO_ADMIN_EMAIL:-admin@hrms.dev}
+      DEMO_ADMIN_PASSWORD: ${DEMO_ADMIN_PASSWORD:?Set in .env}
+      UPLOAD_DIR: /app/data/uploads
+    volumes:
+      - uploaded_files:/app/data/uploads
+volumes:
+  mysql_data:
+  uploaded_files:
